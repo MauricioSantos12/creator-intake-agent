@@ -19,37 +19,49 @@ export default function ReviewPage() {
 
   function setStatus(id: string, status: Status) {
     setCreators((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, status } : c))
+      prev.map((creator) => {
+        if (creator.id === id) {
+          return { ...creator, status };
+        }
+        return creator;
+      })
     );
   }
 
   function scoreFor(id: string): number | null {
-    const r = reviews[id];
-    return r?.phase === "done" ? r.result.fitScore : null;
+    const review = reviews[id];
+
+    if (review && review.phase === "done") {
+      return review.result.fitScore;
+    }
+
+    return null;
+  }
+
+  function updateReview(id: string, state: ReviewState) {
+    setReviews((prev) => ({ ...prev, [id]: state }));
   }
 
   async function runReview() {
-    setReviews((r) => ({ ...r, [selectedId]: { phase: "loading" } }));
+    updateReview(selectedId, { phase: "loading" });
+
     try {
       const res = await fetch("/api/review", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ campaign, creator: selected }),
       });
-      if (!res.ok) throw new Error(`Request failed (${res.status})`);
+
+      if (!res.ok) {
+        throw new Error(`Request failed (${res.status})`);
+      }
+
       const data: AIReview = await res.json();
-      setReviews((r) => ({
-        ...r,
-        [selectedId]: { phase: "done", result: data },
-      }));
-    } catch (e) {
-      setReviews((r) => ({
-        ...r,
-        [selectedId]: {
-          phase: "error",
-          message: e instanceof Error ? e.message : "Something went wrong",
-        },
-      }));
+      updateReview(selectedId, { phase: "done", result: data });
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Something went wrong";
+      updateReview(selectedId, { phase: "error", message });
     }
   }
 

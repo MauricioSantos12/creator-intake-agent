@@ -1,4 +1,4 @@
-import { Sparkles, Loader2, AlertTriangle } from "lucide-react";
+import { Sparkles, AlertTriangle } from "lucide-react";
 import type { ReviewState } from "@/lib/types";
 import { ResultList } from "@/components/ui/ResultList";
 
